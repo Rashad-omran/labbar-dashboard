@@ -117,7 +117,7 @@ const LoginPage: React.FC = () => {
       if (redirectOverride) {
         navigate(redirectOverride)
       } else {
-        navigate('/products', { replace: true })
+        navigate('/dashboard', { replace: true })
       }
     } catch (error: unknown) {
       const errorMessage = error && typeof error === 'object' && 'message' in error

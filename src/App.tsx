@@ -15,7 +15,7 @@ const App: React.FC = () => {
       if (!isAuthenticated) {
         navigate('/auth/login', { replace: true })
       } else {
-        navigate('/products', { replace: true })
+        navigate('/dashboard', { replace: true })
       }
     }
   }, [location.pathname, isAuthenticated, navigate])
