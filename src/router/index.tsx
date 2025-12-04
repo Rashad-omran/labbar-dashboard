@@ -2,6 +2,7 @@ import {
   Navigate,
   RouteObject,
   createBrowserRouter,
+  Outlet,
 } from "react-router-dom";
 import App from "../App";
 import { MenuItemType } from "antd/es/menu/interface";
@@ -10,9 +11,7 @@ import authRoutes from '../views/auth/auth.router'
 import dashboardRoutes from '../views/dashboard/dashboard.router'
 import adminProductsRoutes from '../views/adminProducts/adminProducts.router'
 
-
 export type AdminRouterItem = RouteObject & {
-
   meta?: MenuItemType & {
     hideInMenu?: boolean
     requiresAuth?: boolean
@@ -21,55 +20,45 @@ export type AdminRouterItem = RouteObject & {
   children?: AdminRouterItem[]
 }
 
-
-const routeModules: AdminRouterItem[] = [
-  ...authRoutes,
+// 1. تقسيم المسارات
+const publicRoutes: AdminRouterItem[] = [...authRoutes]
+const privateRoutes: AdminRouterItem[] = [
   ...dashboardRoutes,
   ...adminProductsRoutes,
 ]
 
-
-const authRoutesFiltered: AdminRouterItem[] = []
-const protectedRoutes: AdminRouterItem[] = []
-
-const wrapWithProtectedRoute = (route: AdminRouterItem): AdminRouterItem => {
-  const wrappedChildren = route.children?.map(child => wrapWithProtectedRoute(child)) as AdminRouterItem[] | undefined
-
-  return {
-    ...route,
-    element: route.element ? (
-      <ProtectedRoute>
-        {route.element}
-      </ProtectedRoute>
-    ) : route.element,
-    children: wrappedChildren,
-  } as AdminRouterItem
-}
-
-routeModules.forEach(route => {
-
-  if (route.path?.startsWith('auth/')) {
-    authRoutesFiltered.push(route)
-  } else {
-
-    protectedRoutes.push(wrapWithProtectedRoute(route))
-  }
-})
-
+// 2. تصدير القائمة الكاملة للـ Sidebar
 export const routes: AdminRouterItem[] = [
-  ...authRoutesFiltered,
-  ...protectedRoutes,
-  {
-    path: '*',
-    element: <Navigate to="/auth/login" replace />,
-  },
+  ...publicRoutes,
+  ...privateRoutes,
 ]
 
-const routerConfig: RouteObject[] = [{
-  path: "/",
-  element: <App />,
-  children: routes,
-}]
+// 3. إعداد الـ Router
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      // المسارات العامة (Login)
+      ...publicRoutes,
 
-const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter(routerConfig)
+      // المسارات المحمية (Dashboard, Products)
+      {
+        element: (
+          <ProtectedRoute>
+            <Outlet />
+          </ProtectedRoute>
+        ),
+        children: privateRoutes,
+      },
+
+      // توجيه أي رابط خاطئ لصفحة الدخول
+      {
+        path: '*',
+        element: <Navigate to="/auth/login" replace />,
+      },
+    ],
+  },
+])
+
 export default router
